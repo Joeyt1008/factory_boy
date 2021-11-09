@@ -1,0 +1,51 @@
+language: python
+cache: pip
+os: linux
+dist: focal # OS+dist should be kept in sync with Dockerfile
+arch:
+  - arm64
+env:
+  global: # MongoDB version should be kept in sync with docker-compose image
+    - MONGODB=4.4.8
+jobs:
+  include:
+    #- python: 3.8
+    #  env: TOX_ENV=py38
+    - python: 3.8
+      env: tox-environment=py38-django22-alchemy-mongoengine
+    #- python: 3.8
+    #  env: TOX_ENV=py38-pyexecjs
+    #- python: 3.8
+    #  env: TOX_ENV=py38-pymongo361-pyexecjs
+    #- python: 3.8
+    #  env: TOX_ENV=py38-pymongo-pyexecjs
+
+script:
+  - pip install tox
+  - tox -e $tox-environment
+
+install:
+  - sudo apt-get update && sudo apt-get install -y lsb-release && sudo apt-get clean all
+  - wget -qO - https://www.mongodb.org/static/pgp/server-4.4.asc | sudo apt-key add -
+  - sudo apt-get install gnupg
+  - wget -qO - https://www.mongodb.org/static/pgp/server-4.4.asc | sudo apt-key add -
+  - lsb_release -dc
+  - ls /etc
+  - ls /etc/apt 
+  - ls /etc/apt/sources.list.d/
+  - sudo touch /etc/apt/sources.list.d/mongodb-org-4.4.list
+  - echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/4.4 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-4.4.list
+  - sudo apt-get update
+  - sudo ln -fs /usr/share/zoneinfo/America/New_York /etc/localtime && export DEBIAN_FRONTEND=noninteractive && sudo apt-get install -y tzdata && sudo dpkg-reconfigure --frontend noninteractive tzdata
+  - sudo apt-get install -y mongodb-org=4.4.8
+  - echo "mongodb-org hold" | sudo dpkg --set-selections
+  - echo "mongodb-org-server hold" | sudo dpkg --set-selections
+  - echo "mongodb-org-shell hold" | sudo dpkg --set-selections
+  - echo "mongodb-org-mongos hold" | sudo dpkg --set-selections
+  - echo "mongodb-org-tools hold" | sudo dpkg --set-selections
+  - ps --no-headers -o comm 1 
+  - echo ====================mongodb service starts============================================
+  - sudo systemctl unmask mongod
+  - sudo service mongod start
+  - sudo service mongod status
+  - echo ====================mongodb service started============================================
